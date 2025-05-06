@@ -44,10 +44,26 @@ async def get_badania(request: Request):
     data = load_data(RES_JSON_FILE_PATH)
 
     all_keywords = []
+    
     if isinstance(payload, dict):
+        # Handle case where input is a JSON string
+        if "input" in payload and isinstance(payload["input"], str):
+            try:
+                # Try to parse the input as JSON
+                input_data = json.loads(payload["input"])
+                if isinstance(input_data, dict) and "keywords" in input_data:
+                    keywords_data = input_data["keywords"]
+                    if isinstance(keywords_data, str):
+                        keywords_str = keywords_data.lower()
+                        keywords = [k.strip() for k in keywords_str.replace(';', ',').split(',')]
+                        all_keywords = [k for k in keywords if k]
+                    elif isinstance(keywords_data, list):
+                        all_keywords = [k.lower() for k in keywords_data if isinstance(k, str)]
+            except json.JSONDecodeError:
+                # If not valid JSON, continue with other checks
+                pass
         # Handle nested structure where keywords are inside 'input' field
-        if "input" in payload and isinstance(payload["input"], dict) and "keywords" in payload["input"]:
-            keywords_data = payload["input"]["keywords"]
+        elif "input" in payload and isinstance(payload["input"], dict) and "keywords" in payload["input"]:
             if isinstance(keywords_data, str):
                 keywords_str = keywords_data.lower()
                 keywords = [k.strip() for k in keywords_str.replace(';', ',').split(',')]
@@ -98,7 +114,16 @@ async def get_uczelnie(request: Request):
     if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], str) and payload["input"].startswith("test"):
         return {"output": payload["input"]}
 
-    if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], dict):
+    if "input" in payload and isinstance(payload["input"], str):
+            try:
+                # Try to parse the input as JSON
+                input_data = json.loads(payload["input"])
+                if isinstance(input_data, dict) and "uczelnia" in input_data:
+                    uczelnia = input_data["uczelnia"]
+            except json.JSONDecodeError:
+                # If not valid JSON, continue with other checks
+                pass
+    elif isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], dict):
         uczelnia = payload["input"].get("uczelnia")
     else:
         uczelnia = payload.get("uczelnia") if "uczelnia" in payload else None
