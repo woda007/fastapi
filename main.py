@@ -94,6 +94,10 @@ async def get_uczelnie(request: Request):
 
     print("Webhook received:", payload)
 
+    # Test capability
+    if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], str) and payload["input"].startswith("test"):
+        return {"output": payload["input"]}
+
     if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], dict):
         uczelnia = payload["input"].get("uczelnia")
     else:
