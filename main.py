@@ -89,6 +89,10 @@ async def get_uczelnie(request: Request):
 
     print("Webhook received:", payload)
 
+    # Test capability
+    if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], str) and payload["input"].startswith("test"):
+        return {"output": payload["input"]}
+
     uczelnia = payload.get("uczelnia") if "uczelnia" in payload else None
 
     data_uni = load_data(UNI_JSON_FILE_PATH)
