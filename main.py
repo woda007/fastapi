@@ -37,6 +37,10 @@ async def get_badania(request: Request):
 
     print("Webhook received:", payload)
 
+    # Test capability
+    if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], str) and payload["input"].startswith("test"):
+        return {"output": payload["input"]}
+
     data = load_data(RES_JSON_FILE_PATH)
 
     all_keywords = []
@@ -75,11 +79,18 @@ async def get_badania(request: Request):
     return matching_entries
 
 @app.post("/uczelnie-zespoly")
-def get_uczelnie(uczelnia: str = Query(None, description="Filter records by uczelnia name")):
+async def get_uczelnie(request: Request):
     """
     Retrieve records from the JSON file that match the provided 'uczelnia' parameter.
     If no parameter is provided, returns all records.
     """
+
+    payload = await request.json()
+
+    print("Webhook received:", payload)
+
+    uczelnia = payload.get("uczelnia") if "uczelnia" in payload else None
+
     data_uni = load_data(UNI_JSON_FILE_PATH)
     data_team = load_data(TEAM_JSON_FILE_PATH)
     
