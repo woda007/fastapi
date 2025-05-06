@@ -44,19 +44,24 @@ async def get_badania(request: Request):
     data = load_data(RES_JSON_FILE_PATH)
 
     all_keywords = []
-    # Check if payload is a dictionary with a 'keywords' attribute
-    if isinstance(payload, dict) and "keywords" in payload:
-        # If keywords is a string, split it into a list
-        if isinstance(payload["keywords"], str):
-            # Split the string by common separators and clean up
-            keywords_str = payload["keywords"].lower()
-            # Split by commas, semicolons, or spaces
-            keywords = [k.strip() for k in keywords_str.replace(';', ',').split(',')]
-            # Remove empty strings
-            all_keywords = [k for k in keywords if k]
-        # If keywords is already a list
-        elif isinstance(payload["keywords"], list):
-            all_keywords = [k.lower() for k in payload["keywords"] if isinstance(k, str)]
+    if isinstance(payload, dict):
+        # Handle nested structure where keywords are inside 'input' field
+        if "input" in payload and isinstance(payload["input"], dict) and "keywords" in payload["input"]:
+            keywords_data = payload["input"]["keywords"]
+            if isinstance(keywords_data, str):
+                keywords_str = keywords_data.lower()
+                keywords = [k.strip() for k in keywords_str.replace(';', ',').split(',')]
+                all_keywords = [k for k in keywords if k]
+            elif isinstance(keywords_data, list):
+                all_keywords = [k.lower() for k in keywords_data if isinstance(k, str)]
+        # Original handling for direct 'keywords' attribute
+        elif "keywords" in payload:
+            if isinstance(payload["keywords"], str):
+                keywords_str = payload["keywords"].lower()
+                keywords = [k.strip() for k in keywords_str.replace(';', ',').split(',')]
+                all_keywords = [k for k in keywords if k]
+            elif isinstance(payload["keywords"], list):
+                all_keywords = [k.lower() for k in payload["keywords"] if isinstance(k, str)]
     # If payload is a list of items
     elif isinstance(payload, list):
         for item in payload:
@@ -89,11 +94,10 @@ async def get_uczelnie(request: Request):
 
     print("Webhook received:", payload)
 
-    # Test capability
-    if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], str) and payload["input"].startswith("test"):
-        return {"output": payload["input"]}
-
-    uczelnia = payload.get("uczelnia") if "uczelnia" in payload else None
+    if isinstance(payload, dict) and "input" in payload and isinstance(payload["input"], dict):
+        uczelnia = payload["input"].get("uczelnia")
+    else:
+        uczelnia = payload.get("uczelnia") if "uczelnia" in payload else None
 
     data_uni = load_data(UNI_JSON_FILE_PATH)
     data_team = load_data(TEAM_JSON_FILE_PATH)
